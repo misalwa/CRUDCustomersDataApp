@@ -1,0 +1,139 @@
+﻿@page "/"
+@using Client.Components
+@inject HttpClient Http
+
+<PageTitle>CRUD customers data list</PageTitle>
+
+@if (_addCustomerModal)
+{
+    <AddCustomerModal ButtonClose="(addedCustomer) => CloseAddModal(addedCustomer)" />
+}
+
+@if (_updateCustomerModal)
+{
+    <UpdateCustomerModal CustomerToUpdate="_customerBeingUpdated" ButtonClose="(updatedCustomer) => CloseUpdateModal(updatedCustomer)" />
+}
+
+@if (_deleteCustomerModal)
+{
+    <DeleteCustomerModal CustomerToDelete="_customerBeingDeleted" ButtonClose="(deleteSuccessfull) => CloseDeleteModal(deleteSuccessfull)" />
+}
+
+<h1>List of customers</h1>
+
+<p>Simple CRUD App</p>
+
+
+<button @onclick="() => _addCustomerModal = true" class="btn btn-primary">Add customer</button>
+
+
+@if (_customers == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Created At</th>
+                <th>Action</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var customer in _customers)
+            {
+                <tr>
+                    <td>@customer.Id</td>
+                    <td>@customer.FirstName</td>
+                    <td>@customer.LastName</td>
+                    <td>@customer.Email</td>
+                    <td>@customer.Phone</td>
+                    <td>@customer.Date</td>
+                    <td><button @onclick="() => UpdateOpenModal(customer)" class="btn btn-sm btn-warning btn-block">Update</button></td>
+                    <td><button @onclick="() => DeleteOpenModal(customer)" class="btn btn-sm btn-danger btn-block">Delete</button></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Inject]
+    protected HttpClient httpClient { get; set; }
+
+    private List<Customer>? _customers = null;
+
+    private bool _addCustomerModal = false;
+    private bool _updateCustomerModal = false;
+    private bool _deleteCustomerModal = false;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        _customers = await Http.GetFromJsonAsync<List<Customer>?>(APIEndpoints.CustomersAll);
+    }
+
+
+    private void CloseAddModal(Customer? addedCustomer)
+    {
+        if (addedCustomer != null)
+        {
+            _customers?.Add(addedCustomer);
+        }
+        _addCustomerModal = false;
+
+    }
+
+    private Customer? _customerBeingUpdated = null;
+    private void UpdateOpenModal(Customer? customerToUpdate)
+    {
+        _customerBeingUpdated = customerToUpdate;
+        _updateCustomerModal = true;
+    }
+
+    private void CloseUpdateModal(Customer? updatedCustomer)
+    {
+        if (updatedCustomer != null)
+        {
+            Customer? unUpdatedCustomerinList = _customers?.FirstOrDefault(customer => customer.Id == updatedCustomer.Id);
+
+            if (unUpdatedCustomerinList != null)
+            {
+                unUpdatedCustomerinList.FirstName = updatedCustomer.FirstName;
+                unUpdatedCustomerinList.LastName = updatedCustomer.LastName;
+                unUpdatedCustomerinList.Email = updatedCustomer.Email;
+                unUpdatedCustomerinList.Phone = updatedCustomer.Phone;
+            }
+        }
+
+        _customerBeingUpdated = null;
+        _updateCustomerModal = false;
+    }
+
+
+
+    private Customer? _customerBeingDeleted = null;
+    private void DeleteOpenModal(Customer? customerToDelete)
+    {
+        _customerBeingDeleted = customerToDelete;
+        _deleteCustomerModal = true;
+    }
+
+    private void CloseDeleteModal(bool deleteSuccessfull)
+    {
+        if (deleteSuccessfull && _customerBeingDeleted != null)
+        {
+            _customers?.Remove(_customerBeingDeleted);
+        }
+
+        _customerBeingDeleted = null;
+        _deleteCustomerModal = false;
+    }
+}

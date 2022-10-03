@@ -1,0 +1,61 @@
+﻿<div class="modal fade show d-block bg-modal" id="exampleModal" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">New customer</h5>
+            </div>
+            <EditForm Model="_customerToAdd" OnValidSubmit="CreateCustomerAsync">
+                <div class="modal-body">
+                    <form style="max-width:500px; margin:auto">
+                        <label for="firstName" class="sr-only"></label>
+                        <InputText @bind-Value="_customerToAdd.FirstName" class="form-control" placeholder="First name" required autofocus />
+                        <label for="lastName" class="sr-only"></label>
+                        <InputText @bind-Value="_customerToAdd.LastName" class="form-control" placeholder="Last name" required autofocus />
+                        <label for="email" class="sr-only"></label>
+                        <InputText @bind-Value="_customerToAdd.Email" class="form-control" placeholder="e-mail" required autofocus />
+                        <label for="phone" class="sr-only"></label>
+                        <InputText @bind-Value="_customerToAdd.Phone" class="form-control" placeholder="phone number" required autofocus />
+                    </form>
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                </div>
+                <div class="modal-footer">
+                    <button @onclick="() => ButtonClose.InvokeAsync(_addedCustomer)" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback<Customer?> ButtonClose { get; set; }
+
+    [Inject]
+    protected HttpClient httpClient { get; set; }
+
+    private Customer _customerToAdd = new()
+        {
+            FirstName = "",
+            LastName = "",
+            Email = "",
+            Phone = "",
+        };
+
+    private Customer? _addedCustomer = null;
+
+    private async Task CreateCustomerAsync()
+    {
+
+        HttpResponseMessage response = await httpClient.PostAsJsonAsync<Customer>(APIEndpoints.CustomersAdd, _customerToAdd);
+
+        if (response.IsSuccessStatusCode)
+        {
+            _addedCustomer = await response.Content.ReadFromJsonAsync<Customer>();
+
+            await ButtonClose.InvokeAsync(_addedCustomer);
+
+        }
+    }
+}

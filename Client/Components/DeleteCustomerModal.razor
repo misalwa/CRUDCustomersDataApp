@@ -1,0 +1,44 @@
+﻿<div class="modal fade show d-block bg-modal" id="exampleModal" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Delete customer</h5>
+            </div>
+            @if (CustomerToDelete != null)
+            {
+                <div class="modal-body">
+                    <h2>Are you sure to delete customer @CustomerToDelete.FirstName @CustomerToDelete.LastName?</h2>
+                </div>
+
+                <div class="modal-footer">
+                    <button @onclick="() => ButtonClose.InvokeAsync(false)" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button @onclick="DeleteCustomerAsync" type="button" class="btn btn-danger">Confirm</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback<bool> ButtonClose { get; set; }
+
+    [Parameter]
+    public Customer? CustomerToDelete { get; set; } = null;
+
+    [Inject]
+    protected HttpClient httpClient { get; set; }
+
+    private async Task DeleteCustomerAsync()
+    {
+
+        HttpResponseMessage response = await httpClient.DeleteAsync(APIEndpoints.CustomersDelete(CustomerToDelete.Id));
+
+        if (response.IsSuccessStatusCode)
+        {
+
+            await ButtonClose.InvokeAsync(true);
+
+        }
+    }
+}
